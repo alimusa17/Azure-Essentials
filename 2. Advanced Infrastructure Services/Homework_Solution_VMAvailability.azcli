@@ -1,0 +1,58 @@
+az login
+
+rem #$rgName='su-3-ais-rg'
+
+# 1. Creating a resource group 
+az group create --name su-3-ais-rg --location westeurope 
+
+# 2. create the network security group
+az network nsg create --name su-3-ais-nsgr --resource-group su-3-ais-rg
+
+# 3. Add both inbound rules
+az network nsg rule create --name Port_22 --nsg-name su-3-ais-nsgr --resource-group su-3-ais-rg --access Allow --protocol Tcp --direction Inbound --priority 100 --destination-port-ranges 22
+az network nsg rule create --name Port_80 --nsg-name su-3-ais-nsgr --resource-group su-3-ais-rg --access Allow --protocol Tcp --direction Inbound --priority 110 --destination-port-ranges 80
+
+# 4. Create the virtual network
+az network vnet create --name su-3-ais-vn --resource-group su-3-ais-rg
+
+# 5. Create the virtual subnet
+az network vnet subnet create --name default --vnet-name su-3-ais-vn --resource-group su-3-ais-rg --address-prefixes 10.0.0.0/24 --network-security-group su-3-ais-nsgr
+
+# 6. Create both virtual network adapters
+az network nic create --name su-3-ais-nic1 --resource-group su-3-ais-rg --vnet-name su-3-ais-vn --subnet default
+az network nic create --name su-3-ais-nic2 --resource-group su-3-ais-rg --vnet-name su-3-ais-vn --subnet default
+
+# 7. Create the availability set
+az vm availability-set create --name su-3-ais-vmaset --resource-group su-3-ais-rg --platform-fault-domain-count 2 --platform-update-domain-count 2
+
+# 8. create two virtual machine
+az vm create --name su-3-ais-vm1 --resource-group su-3-ais-rg --image win2016datacenter --size Standard_B1ls --storage-sku Standard_LRS --authentication-type password --admin-username demouser --admin-password DemoPassword-2021 --nic su-3-ais-nic1 --availability-set su-3-ais-vmaset --verbose
+az vm create --name su-3-ais-vm2 --resource-group su-3-ais-rg --image win2016datacenter --size Standard_B1ls --storage-sku Standard_LRS --authentication-type password --admin-username demouser --admin-password DemoPassword-2021 --nic su-3-ais-nic2 --availability-set su-3-ais-vmaset --verbose
+
+# 9. Deploy applications to a Windows virtual machine in Azure with the Custom Script Extension
+# Note! Put script-config.json in current working directory
+az vm extension set --publisher Microsoft.Compute --name CustomScriptExtension --vm-name su-3-ais-vm1 --resource-group su-3-ais-rg --settings script-config.json --verbose
+az vm extension set --publisher Microsoft.Compute --name CustomScriptExtension --vm-name su-3-ais-vm2 --resource-group su-3-ais-rg --settings script-config.json --verbose
+
+# 10. Create a public IP address for our load balancer
+az network public-ip create --name su-3-ais-pip --resource-group su-3-ais-rg --allocation-method dynamic
+
+# 11. Create the load balancer 
+az network lb create --name su-3-ais-lbal --resource-group su-3-ais-rg --sku Basic --frontend-ip-name su-3-ais-lbal-fe --backend-pool-name su-3-ais-lbal-be --public-ip-address su-3-ais-pip
+
+# 12. Create a health probe
+az network lb probe create --name su-3-ais-lbal-hp --lb-name su-3-ais-lbal --resource-group su-3-ais-rg --protocol tcp --port 80
+
+# 13. Create the load balancing rule
+az network lb rule create --name su-3-ais-lbal-rule --lb-name su-3-ais-lbal --resource-group su-3-ais-rg --protocol tcp --frontend-port 80 --backend-port 80 --frontend-ip-name su-3-ais-lbal-fe --backend-pool-name su-3-ais-lbal-be --probe-name su-3-ais-lbal-hp
+
+# 14. Update IP configurations of both virtual network adapters
+az network nic ip-config update --name ipconfig1 --resource-group su-3-ais-rg --nic-name su-3-ais-nic1 --lb-name su-3-ais-lbal --lb-address-pools su-3-ais-lbal-be
+az network nic ip-config update --name ipconfig1 --resource-group su-3-ais-rg --nic-name su-3-ais-nic2 --lb-name su-3-ais-lbal --lb-address-pools su-3-ais-lbal-be
+
+# 15. Show public IP
+az network public-ip show --name su-3-ais-pip --resource-group su-3-ais-rg --query [ipAddress] --output tsv
+
+# 16 Cleaning
+az group delete --name su-3-ais-rg --yes --no-wait
+az group delete --name NetworkWatcherRG --yes --no-wait
