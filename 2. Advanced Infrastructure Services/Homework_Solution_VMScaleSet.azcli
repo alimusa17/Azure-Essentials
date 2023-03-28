@@ -1,0 +1,21 @@
+az login
+
+# 1. Creating a resource group 
+az group create --name su-3-ais-rg1 --location westeurope 
+
+# 2. Create a virtual machine scale set
+az vmss create --resource-group su-3-ais-rg1 --name su-3-ais-vss --image win2016datacenter --vm-sku Standard_B1s --storage-sku Standard_LRS --instance-count 2 --upgrade-policy-mode automatic --authentication-type password --admin-username demouser --admin-password DemoPassword-2021 --verbose
+
+# 3. Create vitual scale set extention with custom script
+# Note! Put script-config.json in current working directory
+az vmss extension set --publisher Microsoft.Compute --name CustomScriptExtension --vmss-name su-3-ais-vss --resource-group su-3-ais-rg1 --settings script-config.json --verbose
+
+# 4. Create load balancer and rule
+az network lb rule create --resource-group su-3-ais-rg1 --name su-3-ais-lb-rule --lb-name su-3-ais-vssLB --backend-pool-name su-3-ais-vssLBBEPool --backend-port 80 --frontend-ip-name loadBalancerFrontEnd --frontend-port 80 --protocol tcp
+
+# 5. Show Public IP 
+az network public-ip show --resource-group su-3-ais-rg1 --name su-3-ais-vssLBPublicIP --query [ipAddress] --output tsv
+
+# 6. Cleaning
+az group delete --name su-3-ais-rg1 --yes --no-wait
+az group delete --name NetworkWatcherRG --yes --no-wait
