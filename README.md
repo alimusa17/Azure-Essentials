@@ -26,3 +26,14 @@
 • Templates and Automation
 
 • Storage
+
+
+### 3. Databases and Analytics
+
+• Relational Databases
+
+• NoSQL Databases
+
+• Analytics
+
+• Practice
