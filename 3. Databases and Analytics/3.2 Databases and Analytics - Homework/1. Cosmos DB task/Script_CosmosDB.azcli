@@ -1,0 +1,16 @@
+az login
+
+# 1. Create resource group
+az group create --resource-group su-4-dba-cosDB-rg --location westeurope
+
+# 2. Create Azure Cosmos DB's API for MongoDB
+az cosmosdb create --name su-4-dba-cosDB-acc --resource-group su-4-dba-cosDB-rg --kind MongoDB --server-version 4.0 --verbose
+
+# 3. Create Azure Cosmos DB's database
+az cosmosdb mongodb database create --account-name su-4-dba-cosDB-acc --resource-group su-4-dba-cosDB-rg --name su-4-dba-cosDB-db --throughput 400 --verbose
+
+# 4. Create collection
+az cosmosdb sql container create --account-name su-4-dba-cosDB-acc --database-name su-4-dBa-cosDB-db --resource-group su-4-dba-cosDB-rg --name su-4-dba-cosDB-ct --partition-key-path /persondata 
+
+# 5. Clean up
+az group delete --name su-4-dba-cosDB-rg --no-wait --yes

@@ -1,0 +1,34 @@
+{
+    "persondata": [
+        {
+            "id": 1,
+            "name": "Pesho",
+            "sex": "male",
+            "salary": 1700
+        },
+        {
+            "id": 2,
+            "name": "Gosho",
+            "sex": "male",
+            "salary": 1900
+        },
+        {
+            "id": 3,
+            "name": "Tosho",
+            "sex": "male",
+            "salary": 2000
+        },
+        {
+            "id": 4,
+            "name": "Tisho",
+            "sex": "male",
+            "salary": 2300
+        },
+        {
+            "id": 5,
+            "name": "Stosho",
+            "sex": "male",
+            "salary": 2700
+        }  
+    ]
+}
