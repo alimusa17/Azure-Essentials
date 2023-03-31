@@ -1,0 +1,44 @@
+# Login to Azure
+az login
+
+# 1. Create resource group
+az group create --resource-group su-4-dba-sa-rg --location westeurope
+
+# 2. Creating database server
+az sql server create --name su4dbaserv --resource-group su-4-dba-sa-rg --location westeurope --admin-user demouser --admin-password demouserpassword2023@ --verbose
+
+# 3. Configuring firewall
+# Portal -> Database -> Firewall and virtual networks -> Allow Azure services and resource to access this server -> + Add client IP 
+az sql server firewall-rule create --resource-group su-4-dba-sa-rg --server su4dbaserv --name allowip --start-ip-address  77.70.53.108 --end-ip-address  77.70.53.108
+
+# 4. Create one database
+az sql db create --resource-group su-4-dba-sa-rg --server su4dbaserv --name su4dba-db --edition Basic --capacity 5 --zone-redundant false
+
+# 5. Create storage account
+az storage account create --name su4dbastoreacc --resource-group su-4-dba-sa-rg --encryption-services blob --location westeurope --access-tier Cool  --kind StorageV2 --sku Standard_LRS
+
+# 6. Create storage containers
+az storage container create --name su4dbacont --resource-group su-4-dba-sa-rg --account-name su4dbastoreacc 
+az storage container create --name su4dbasacont --resource-group su-4-dba-sa-rg --account-name su4dbastoreacc  
+
+# 7. Create a stream analytics job
+# 7.1. stream analytics job -> + Add -> Streaming units to 1
+
+# 8. Configure input and output for a stream analytics job
+# 8.1. + Add stream input -> Blob storage/ADLS Gen2 -> Authentication mode to Connection string -> Path pattern field enter input/
+# 8.2. Outputs -> + Add -> SQL Database -> create 
+
+# 9. Create a query in su-4--dba-sa_sql_server.txt
+
+# 10. Adjust the data generation process : 
+# 10.1. AzureBlobJsonGenerator.exe.config -> change to match your resource: StorageConnectionString, BlobContainer 
+
+# 11. Start the job
+
+# az stream-analytics job create --resource-group su-4-dba-sa-rg --name su4dbasaj --location westeurope --sku Standard
+
+# az stream-analytics job start --name su4dbasaj --resource-group su-4-dba-sa-rg 
+# az stream-analytics job stop --name su4dbasaj --resource-group su-4-dba-sa-rg
+
+# 12. Clean up
+az group delete --name su-4-dba-sa-rg --no-wait --yes

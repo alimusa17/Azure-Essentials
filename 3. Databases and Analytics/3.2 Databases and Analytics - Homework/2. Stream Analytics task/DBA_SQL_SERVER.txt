@@ -1,0 +1,41 @@
+-- Create a new table called '[sensor]' in schema '[dbo]'
+-- Drop the table if it already exists
+IF OBJECT_ID('[dbo].[sensor]', 'U') IS NOT NULL
+
+DROP TABLE [dbo].[sensor]
+GO
+-- Create the table in the specified schema
+
+CREATE TABLE [dbo].[sensor]
+(
+    [Id] NVARCHAR(50),
+    [Sensor] NVARCHAR(50),
+    [MeasureId] NVARCHAR(50),
+    [MeasuredAt] NVARCHAR(50),
+    [Temperature] NVARCHAR(50),
+);
+
+GO
+
+	
+SELECT TOP (1000)
+       [Id],
+       [Sensor],
+       [MeasureId],
+       [MeasuredAt],
+       [Temperature]
+  FROM [dbo].[sensor]
+  
+
+# stream analytic query
+
+SELECT
+       CONCAT(Measurement.[Index], '-', Sensor) AS ID,
+       Sensor,
+       Measurement.[Index] AS MeasureId,
+       Measurement.Taken AS MeasuredAt,
+       Measurement.Value AS Temperature
+INTO
+    [stream-out]
+FROM
+    [stream-in]
