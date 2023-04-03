@@ -25,8 +25,6 @@
 
 • Templates and Automation
 
-• Storage
-
 
 ### 3. Databases and Analytics
 
@@ -36,4 +34,22 @@
 
 • Analytics
 
-• Practice
+
+### 4. Azure for Developers
+
+• Azure App Services
+
+• Azure Functions
+
+• Containers
+
+
+### 5. Azure and DevOps
+
+• DevOps Methodologies and Practices
+
+• Continuous Integration
+
+• Continuous Deployment
+
+• Team Tools
