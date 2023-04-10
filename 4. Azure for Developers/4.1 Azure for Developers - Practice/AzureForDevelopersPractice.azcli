@@ -1,0 +1,85 @@
+az login
+
+#
+# Part 1 Container instance
+#
+az group create -g su-5-afd-cont-rg -l westeurope
+
+az container create -g su-5-afd-cont-rg -n su5afdcontainer --image shekeriev/aze-image-1 --dns-name-label su5afdcontainer --ports 80 --cpu 1 --memory 0.5 --os-type Linux --ip-address Public --verbose
+az container delete -g su-5-afd-cont-rg -n su5afdcontainer -y
+
+az container show -g su-5-afd-cont-rg -n su5afdcontainer -o table
+
+az container show -g su-5-afd-cont-rg -n su5afdcontainer --query "{FQDN:ipAddress.fqdn,IP:ipAddress.ip}" --output table
+
+az container logs -g su-5-afd-cont-rg -n su5afdcontainer
+
+az container exec -g su-5-afd-cont-rg -n su5afdcontainer --exec-command hostname
+
+az group delete --name su-5-afd-cont-rg --no-wait -y
+
+#
+# Part 1 Container image
+#
+docker build . -t aze-image-2
+docker images
+docker run -d -p 8080:80 aze-image-2
+
+az group create -g su-5-afd-contim-rg -l westeurope
+
+az acr create -g su-5-afd-contim-rg -l westeurope -n su5afdcontim --sku Basic --admin-enabled true --public-network-enabled true
+
+docker tag aze-image-2 su5afdcontim.azurecr.io/aze-image-2:v1
+
+az acr login -n su5afdcontim
+
+docker push su5afdcontim.azurecr.io/aze-image-2:v1
+
+az acr repository list -n su5afdcontim --output table
+
+az acr repository show-tags -n su5afdcontim --repository aze-image-2 --output table
+
+az container create -g su-5-afd-contim-rg -n su5afdcontinst --image su5afdcontim.azurecr.io/aze-image-2:v1 --cpu 1 --memory 0.5 --registry-login-server su5afdcontim.azurecr.io --registry-username su5afdcontim --registry-password "**********************" --dns-name-label su5afdcontinst --ports 80
+
+az group delete -n su-5-afd-contim-rg --no-wait -y
+
+#
+# Part 2 Azure App Services
+#
+az group create -g su-5-afd-webapp-rg -l westeurope
+
+az webapp list-runtimes
+
+az webapp up -g su-5-afd-webapp-rg -l westeurope -n su5afdwebapp --html --plan Windows-WebApp-Plan --sku F1
+
+az webapp list -g su-5-afd-webapp-rg
+
+az webapp list -g su-5-afd-webapp-rg --query "[].{Name:***********,URL:***************}" -o table
+
+az webapp up -g su-5-afd-webapp-rg -l westeurope -n su5afdwebapp --html
+#az webapp update -g su-5-afd-webapp-rg -n su5afdwebapp
+
+az group delete -g su-5-afd-webapp-rg -y --no-wait
+az group delete -g DefaultResourceGroup-WEU -y --no-wait
+
+#
+# Part 2 Azure App Services
+#
+az group create -g su-5-afd-webappphp-rg -l westeurope
+
+# from poratl -> "Yes" on "Allow Azure services and resources to access this server"
+az sql server create -n su5afdserv -g su-5-afd-webappphp-rg -l westeurope --admin-user demouser --admin-password demopassword2023@ --verbose
+
+az sql server firewall-rule create -g su-5-afd-webappphp-rg --server su5afdserv -n allowip --start-ip-address  **.**.**.*** --end-ip-address  **.**.**.***
+
+az sql db create -g su-5-afd-webappphp-rg --server su5afdserv -n su5afdphp-db --edition Basic --capacity 5 --zone-redundant false
+
+az webapp list-runtimes --linux
+
+az webapp up -g su-5-afd-webappphp-rg -l westeurope -n su5afdwebappphp --os-type Linux --plan linux-plan --sku F1 --runtime PHP:7.4
+
+az webapp up -g su-5-afd-webappphp-rg -l westeurope -n su5afdwebappphp
+
+az group delete -g su-5-afd-webappphp-rg -y --no-wait
+
+az logout
