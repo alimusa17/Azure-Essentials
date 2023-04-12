@@ -53,3 +53,5 @@
 • Continuous Deployment
 
 • Team Tools
+
+![Azure Essentials - February 2023 - Certificate](https://user-images.githubusercontent.com/106487730/231540860-82eb631a-1cc3-4f87-9b7d-dd6598dcfb02.jpeg)
