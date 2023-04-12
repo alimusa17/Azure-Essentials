@@ -1,5 +1,7 @@
 # Azure-Essentials
 
+![320941801_560038812194642_3171008187468531300_n](https://user-images.githubusercontent.com/106487730/231593864-3cade870-6b16-4284-bb66-73eee75aa087.png)
+
 ### 1. Core Infrastructure Services
 
 • Cloud Concepts
