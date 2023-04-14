@@ -1,0 +1,42 @@
+az login
+
+# 1. Create resource group
+az group create --resource-group su-5-afd-db-rg --location westeurope
+
+# 2. Creating database server
+az sql server create --name su5afdsqlserv --resource-group su-5-afd-db-rg --location westeurope --admin-user demouser --admin-password demopassword2023@ --verbose
+
+# 3. Configuring firewall
+# Portal -> Database -> Firewall and virtual networks -> Allow Azure services and resource to access this server -> + Add client IP 
+az sql server firewall-rule create --resource-group su-5-afd-db-rg --server su5afdsqlserv --name allowip --start-ip-address  **.**.**.*** --end-ip-address  **.**.**.***
+
+# 4. Create one database
+az sql db create --resource-group su-5-afd-db-rg --server su5afdsqlserv --name su5afd-db --edition Basic --capacity 5 --zone-redundant false
+
+# 5. Show database connection string
+az sql db show-connection-string --client ado.net --server su5afdsqlserv --auth-type SqlPassword --name su5afdsqlserv
+
+
+# 6. Create another resource group
+az group create --resource-group su-5-afd-func-rg --location westeurope
+
+# 7. Create storage account
+az storage account create --name su5afdstoreacc --resource-group su-5-afd-func-rg --encryption-services blob --location westeurope --access-tier Cool  --kind StorageV2 --sku Standard_LRS
+
+# 8. Create App Service plans
+az appservice plan create --name su5afdappplan --resource-group su-5-afd-func-rg --location westeurope --sku F1
+
+# 9. Create functionapp from portal 
+# 9.1. From portal -> Function App -> Add set: resource group, subscription, Publish->Code, runtime stack, version, Region
+# 9.2. On Hosting tab set: Operating System -> Windows, App plan
+# 9.3. Create
+# 9.4. Create a HTTP triggered function: Overview -> Add 
+# 9.5. on Code + Test copy and paste "function.cs" 
+# 9.6. copy Get function URL and paste into browser and add &name=Name at the end in the URL
+az functionapp create --storage-account su5afdstoreacc --resource-group su-5-afd-func-rg --name su5funcapp --os-type Windows --runtime dotnet --plan su5afdappplan --disable-app-insights true
+
+# 10. Cleanning resource
+az group delete -n su-5-afd-db-rg -y --no-wait
+az group delete -n su-5-afd-func-rg -y --no-wait
+az group delete -n DefaultResourceGroup-CUS -y --no-wait
+az group delete -n DefaultResourceGroup-WEU -y --no-wait
