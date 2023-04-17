@@ -1,0 +1,123 @@
+az login
+
+# 1. Create resource group
+az group create -g su-6-adevops-rg -l westeurope
+
+# 2. Create a container registry
+az acr create -g su-6-adevops-rg -l westeurope -n su6adevopsacr --sku Basic --admin-enabled true --public-network-enabled true
+
+# 3. Create a Kubernetes cluster with one node
+az aks create -g su-6-adevops-rg -l westeurope -n su6adevops-k8s --node-count 1 --node-vm-size Standard_B2s --enable-addons monitoring --generate-ssh-keys --attach-acr su6adevopsacr --verbose
+
+# 4. Get credentials for the cluster
+az aks get-credentials -g su-6-adevops-rg -n su6adevops-k8s
+
+# 5. Retrieve information about the cluster
+kubectl cluster-info
+
+# 6. Retrieve information about the nodes
+kubectl get nodes
+
+# 7. List available namespaces
+kubectl get namespaces
+
+# 8. List all pods in all namespaces
+kubectl get pods --all-namespaces
+
+# 9. Build the image
+docker build . -t aze-web-app-php
+
+# 10. Run the container for test
+docker run -d --name webapp -p 8000:80 aze-web-app-php
+
+# 11. Stop container
+docker stop webapp
+docker container rm webapp --force
+docker start webapp
+
+# 12. Login to the ACR
+az acr login -n su6adevopsacr
+
+# 13. Check the login server
+az acr list -g su-6-adevops-rg --query "[].{acrLoginServer:loginServer}" -o table
+
+# 14. Tag our image
+docker tag aze-web-app-php su6adevopsacr.azurecr.io/aze-web-app-php:v1
+
+# 15. Push the image to our ACR
+docker push su6adevopsacr.azurecr.io/aze-web-app-php:v1
+
+# 16. List the images in our ACR
+az acr repository list -n su6adevopsacr -o table
+
+# 17. List all tags of an image
+az acr repository show-tags -n su6adevopsacr --repository aze-web-app-php -o table
+
+# 18. Integrate our existing ACR with our existing AKS cluster
+az aks update -n su6adevops-k8s -g su-6-adevops-rg --attach-acr su6adevopsacr
+
+# 19. Navigate to manifests folder
+cd .\manifests
+
+# 20. Deploy the service and the application
+kubectl apply -f service.yaml -f deployment.yaml
+
+# 21. We can check periodically how it is going:
+kubectl get svc,pod
+
+# 22. Get detailed information about the deployment
+kubectl describe deployment phpapp-deployment
+
+# 
+# Scale an application
+# 
+kubectl get pods
+
+kubectl describe deployment phpapp-deployment
+
+kubectl scale --replicas=3 deployment.apps/phpapp-deployment
+
+kubectl scale --replicas=1 deployment.apps/phpapp-deployment
+
+# 
+# Scale the cluster
+# 
+az aks scale -g su-6-adevops-rg -n su6adevops-k8s --node-count 2 --nodepool-name nodepool1 --verbose
+
+kubectl get nodes -o wide
+
+# 
+# Update and redeploy the application
+# 
+# Stop container if running
+docker container rm webapp --force
+
+# Build the new image
+docker build . -t aze-web-app-php
+
+# Test the app locally
+docker run -d --name webapp -p 8000:80 aze-web-app-php
+
+# Tag the image with v2
+docker tag aze-web-app-php su6adevopsacr.azurecr.io/aze-web-app-php:v2
+
+# Push the image to our ACR
+docker push su6adevopsacr.azurecr.io/aze-web-app-php:v2
+
+# List of images available on our ACR
+az acr repository list -n su6adevopsacr --output table
+
+# All tags for an image:
+az acr repository show-tags -n su6adevopsacr --repository aze-web-app-php --output table
+
+# go to modified manifest
+cd .\manifests
+
+# Deploy both the service and application simultaneously:
+kubectl apply -f service.yaml -f deployment.yaml
+
+kubectl get svc,pod
+
+az group delete -g su-6-adevops-rg -y --no-wait
+az group delete -g DefaultResourceGroup-WEU -y --no-wait
+az group delete -g NetworkWatcherRG -y --no-wait
