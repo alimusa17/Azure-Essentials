@@ -1,0 +1,19 @@
+From Azure Portal go to DevOps Starter 
+Select PHP
+Click Next: Framework >
+Select Simple PHP
+Click Next: Service >
+Select Web App for Containers
+Click Next: Create >
+Click the Authorize button
+Click Authorize AzureGithubActions
+Enter a Repository name
+Select the right Subscription
+Select the right Location
+Click OK
+Click Review + create
+After resource is created initial deployment is runned
+Clone the repo locally 
+Make modification
+Commit and Push to the repository
+Seccond deployment is started

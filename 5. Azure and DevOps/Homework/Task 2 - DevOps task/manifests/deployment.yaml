@@ -1,0 +1,23 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hw5-deployment
+  labels:
+    app: hw5-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hw5
+  template:
+    metadata:
+      labels:
+        app: hw5
+    spec:
+      containers:
+      - name: hw5
+        image: acrhw.azurecr.io/aze-hw5-app
+        ports:
+        - containerPort: 80
+          name: hw5
