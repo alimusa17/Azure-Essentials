@@ -1,0 +1,39 @@
+az group create -n RG-Exam -l westeurope
+
+az acr create -g RG-Exam -l westeurope -n amsusolacr --sku Basic --admin-enabled true --public-network-enabled true
+
+az acr login -n amsusolacr
+
+az aks create -g RG-Exam -l westeurope -n amsusolk8s --node-count 1 --node-vm-size Standard_B2s --enable-addons monitoring --generate-ssh-keys --attach-acr amsusolacr --load-balancer-sku basic
+
+az aks get-credentials -g RG-Exam -n amsusolk8s
+
+kubectl cluster-info
+
+az sql server create -n amsolsqlsrv -g RG-Exam -l westeurope --admin-user demouser --admin-password Demopassword2023@ 
+az sql server firewall-rule create -g RG-Exam --server amsolsqlsrv -n allowip --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
+az sql db create -g RG-Exam --server amsolsqlsrv --name amsolsqldb --edition Basic --capacity 5 --zone-redundant false 
+
+docker build . -t examapp
+
+docker run -d --name webapp -p 8000:80 examapp
+
+docker container rm webapp --force
+
+docker tag examapp amsusolacr.azurecr.io/examapp:latest
+
+docker push amsusolacr.azurecr.io/examapp:latest
+
+az acr repository list -n amsusolacr -o table
+
+.\manifests
+
+kubectl apply -f service.yaml -f deployment.yaml
+
+kubectl get svc,pod
+
+kubectl describe deployment examapp
+
+az webapp up -g RG-Exam -l westeurope -n amsolphpwebapp --os-type Windows --plan win-plan --sku F1 --runtime PHP:7.4
+
+az group delete -g RG-Exam -y --no-wait
